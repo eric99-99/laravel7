@@ -41,8 +41,7 @@ class TransactionController extends Controller
 
     public function list(Request $request)
     {
-        // dd($request);
-
+        
         $data = Models\Transaction::join('transaction_detail', 'transaction.id', '=','transaction_detail.transaction_id')
                 ->select(['transaction.*','transaction_detail.trans_name', 
                           'transaction_detail.total', 'transaction_detail.category_type' ]);
@@ -111,9 +110,6 @@ class TransactionController extends Controller
      */
     public function store(Request $request)
     {
-        $status ="";
-        $message ="";
-
         try {
             DB::beginTransaction();
             $transaction = new Models\Transaction;
@@ -155,16 +151,13 @@ class TransactionController extends Controller
             }  
 
             DB::commit();
-            $status = 'success';
-            $message = 'Data is successfully saved';
-
+           
         } catch (\Exception $e) {
              DB::rollback();
-             $status = 'error';
-             $message =  $e->getMessage();
+             return redirect()->back()->withErrors($e->getMessage())->withInput();
         }
 
-        return redirect('/trans/view')->with($status, $message);
+        return redirect('/trans/view')->with('success','Data is successfully saved');
     }
 
     /**
@@ -200,48 +193,57 @@ class TransactionController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $transaction = Models\Transaction::find($id);
-        $transaction->description = $request->description;
-        $transaction->code = $request->code;
-        $transaction->rate_euro = $request->rate_euro;
-        $transaction->date_paid = $request->date_paid;
-        $transaction->save();
+        try {
+            // dd($request);
+            DB::beginTransaction();
 
-        // delete detail
-        $id_delete = Models\TransactionDetail::where('transaction_id', $id)->pluck('id');
-        Models\TransactionDetail::whereIn('id', $id_delete)->delete();
-
-
-        if($request->data1){
-            foreach ($request->data1 as $item) {
-                $item = (object) $item;
-                if($item->name && $item->value){
-                    $detail = new Models\TransactionDetail;
-                    $detail->transaction_id =  $transaction->id;
-                    $detail->category_type = $request->category_type1;
-                    $detail->trans_name =  $item->name;
-                    $detail->total =  $item->value;
-                    
-                    $detail->save();
+            $transaction = Models\Transaction::find($id);
+            $transaction->description = $request->description;
+            $transaction->code = $request->code;
+            $transaction->rate_euro = $request->rate_euro;
+            $transaction->date_paid = $request->date_paid;
+            $transaction->save();
+    
+            // delete detail
+            $id_delete = Models\TransactionDetail::where('transaction_id', $id)->pluck('id');
+            Models\TransactionDetail::whereIn('id', $id_delete)->delete();
+    
+    
+            if($request->data1){
+                foreach ($request->data1 as $item) {
+                    $item = (object) $item;
+                    if($item->name && $item->value){
+                        $detail = new Models\TransactionDetail;
+                        $detail->transaction_id =  $transaction->id;
+                        $detail->category_type = $request->category_type1;
+                        $detail->trans_name =  $item->name;
+                        $detail->total =  $item->value;
+                        
+                        $detail->save();
+                    }
                 }
             }
-        }
-
-        if($request->data2){
-            foreach ($request->data2 as $item) {
-                $item = (object) $item;
-                if($item->name && $item->value){
-                    $detail = new Models\TransactionDetail;
-                    $detail->transaction_id =  $transaction->id;
-                    $detail->category_type = $request->category_type2;
-                    $detail->trans_name =  $item->name;
-                    $detail->total =  $item->value;
-                    
-                    $detail->save();
+    
+            if($request->data2){
+                foreach ($request->data2 as $item) {
+                    $item = (object) $item;
+                    if($item->name && $item->value){
+                        $detail = new Models\TransactionDetail;
+                        $detail->transaction_id =  $transaction->id;
+                        $detail->category_type = $request->category_type2;
+                        $detail->trans_name =  $item->name;
+                        $detail->total =  $item->value;
+                        
+                        $detail->save();
+                    }
                 }
             }
-        }
 
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollback();
+            return redirect()->back()->withErrors($e->getMessage())->withInput();
+        }
        
         return redirect('/trans/view')->with('success', 'Data is successfully updated');
     }
@@ -254,19 +256,27 @@ class TransactionController extends Controller
      */
     public function destroy($id)
     {
-        $idtrs = null;
+        try {
+            DB::beginTransaction();
 
-        $detail= Models\TransactionDetail::find($id);
-        
-        if($detail){
-            $idtrs = $detail->transaction_id;
-        }
-        $detail->delete();
-
-        $data = Models\TransactionDetail::where('transaction_id', $idtrs)->first();
-        if(!$data){
-            $header = Models\Transaction::find($idtrs);
-            $header->delete();
+            $idtrs = null;
+    
+            $detail= Models\TransactionDetail::find($id);
+            
+            if($detail){
+                $idtrs = $detail->transaction_id;
+            }
+            $detail->delete();
+    
+            $data = Models\TransactionDetail::where('transaction_id', $idtrs)->first();
+            if(!$data){
+                $header = Models\Transaction::find($idtrs);
+                $header->delete();
+            }
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollback();
+            return redirect()->back()->withErrors($e->getMessage())->withInput();
         }
 
         return redirect('/trans/view')->with('success', 'Data is successfully deleted');

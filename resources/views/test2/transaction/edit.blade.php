@@ -5,9 +5,18 @@
 
 <div class="card mt-1">
     <div  class="card-header">
-         <strong>Input Transaksi</strong> 
+         <strong>Edit Transaksi</strong> 
     </div>
     <div class="card-body">
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <ul>
+                    @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div><br />
+        @endif
         <form method="post" action="{{ route('trans-update', $data->id )}}">
             @csrf
             @method('PATCH')
@@ -66,10 +75,13 @@
                         <tbody class="tbody1">
                           @php
                             $i=1;      
-                            $last_item = count($data->detail);
+                            $is_item = false;
                           @endphp
                           @foreach ($data->detail as $item)
                             @if ($item->category_type == "income" )
+                                @php
+                                    $is_item = true;
+                                @endphp
                                 <tr>
                                     <td><input type="text" class="form-control form-control-sm" name="data1[{{$i}}][name]" id="name1_1" value="{{$item->trans_name}}"></td>
                                     <td><input type="number" class="form-control form-control-sm text-right" name="data1[{{$i}}][value]" id="value1_1"value="{{$item->total}}"></td>
@@ -80,7 +92,13 @@
                              $i++;
                            @endphp   
                           @endforeach
-                          
+                          @if ($is_item === false)
+                            <tr>
+                                <td><input type="text" class="form-control form-control-sm" name="data1[1][name]" id="name1_1"></td>
+                                <td><input type="number" class="form-control form-control-sm text-right" name="data1[1][value]" id="value1_1"></td>
+                                <td class="text-center"><button class="btn btn-primary btn-add-item" id="btn-add-item1_1">+</button></td>
+                            </tr> 
+                          @endif
                         </tbody>
                     </table>
 
@@ -120,21 +138,34 @@
                                 <td class="text-center"><button class="btn btn-primary btn-add-item" id="btn-add-item_2">+</button></td>
                               </tr> --}}
                             @php
-                              $i=1;      
-                              $last_item = count($data->detail);
+                              $j=1;      
+                              $is_item = false;
                             @endphp
                             @foreach ($data->detail as $item)
                               @if ($item->category_type == "expense" )
+                                   @php
+                                        $is_item = true; 
+                                   @endphp 
+                                       
                                   <tr>
-                                      <td><input type="text" class="form-control form-control-sm" name="data2[{{$i}}][name]" id="name2_2" value="{{$item->trans_name}}"></td>
-                                      <td><input type="number" class="form-control form-control-sm text-right" name="data2[{{$i}}][value]" id="value2_2"value="{{$item->total}}"></td>
-                                      <td class="text-center"><button class="btn btn-primary btn-add-item" id="btn-add-item2_2">+</button></td>
+                                      <td><input type="text" class="form-control form-control-sm" name="data2[{{$j}}][name]" id="name2_1" value="{{$item->trans_name}}"></td>
+                                      <td><input type="number" class="form-control form-control-sm text-right" name="data2[{{$j}}][value]" id="value2_1"value="{{$item->total}}"></td>
+                                      <td class="text-center"><button class="btn btn-primary btn-add-item" id="btn-add-item2_1">+</button></td>
                                   </tr> 
                               @endif
                              @php
-                               $i++;
+                               $j++;
                              @endphp   
                             @endforeach
+
+                            @if ($is_item === false)
+                                <tr>
+                                    <td><input type="text" class="form-control form-control-sm" name="data2[1][name]" id="name2_1"></td>
+                                    <td><input type="number" class="form-control form-control-sm text-right" name="data2[1][value]" id="value2_1"></td>
+                                    <td class="text-center"><button class="btn btn-primary btn-add-item" id="btn-add-item2_1">+</button></td>
+                                </tr> 
+                            @endif
+
                         </tbody>
                     </table>
 
@@ -160,7 +191,6 @@
     <script type="text/javascript">
         window.$(document).ready(function(e){
             let dt = {!! json_encode($data) !!};
-            console.log('data', dt);
 
             dt_income = dt.detail.filter(x => x.category_type === 'income');
 
@@ -204,17 +234,19 @@
 
         window.$(".tbl-data2").on('click', '.btn-add-item', function(e){
             e.preventDefault();
-            let i = parseInt(this.id.split('_')[1]);
+            let j = parseInt(this.id.split('_')[1]);
 
             // window.$('#name2_' + i).prop('disabled', true);
             // window.$('#value2_' + i).prop('disabled', true);
-            i++;
+            // j++;
             
             let sHtml ='<tr>' ;
-            sHtml = sHtml +  '<td><input type="text" class="form-control form-control-sm" name="data2['+i+'][name]" id="name2_' +i+ '" ></td>';
-            sHtml = sHtml +  '<td><input type="number" class="form-control form-control-sm text-right" name="data2['+i+'][value]" id="value2_'+ i+ '"></td>';
-            sHtml = sHtml +  '<td class="text-center"><button class="btn btn-primary btn-add-item" id="btn-add-item2_' + i + '" >+</button></td>';
+            sHtml = sHtml +  '<td><input type="text" class="form-control form-control-sm" name="data2['+j+'][name]" id="name2_' +j+ '" ></td>';
+            sHtml = sHtml +  '<td><input type="number" class="form-control form-control-sm text-right" name="data2['+j+'][value]" id="value2_'+ j+ '"></td>';
+            sHtml = sHtml +  '<td class="text-center"><button class="btn btn-primary btn-add-item" id="btn-add-item2_' + j + '" >+</button></td>';
             sHtml = sHtml +  '</tr>';
+
+            j++;
 
             window.$('.tbody2').append(sHtml);
             window.$(this).hide();
