@@ -16,8 +16,6 @@ class TransactionController extends Controller
      */
     public function index(Request $request)
     {
-        dd($request);
-
         $data = Models\Transaction::join('transaction_detail', 'transaction.id', '=','transaction_detail.transaction_id')
                 ->select(['transaction.*','transaction_detail.trans_name', 
                           'transaction_detail.total', 'transaction_detail.category_type', 
@@ -37,11 +35,13 @@ class TransactionController extends Controller
         $data = $data->orderBy('transaction.id', 'asc')
                      ->orderBy('transaction_detail.trans_name', 'asc');
         
-        $data = $data->paginate(10);    
+        $perPage = $request->perPage ?? 10; 
+        
+        $data = $data->paginate($perPage);    
 
         $date = Carbon::now();
         
-        return view('test2.transaction.view', compact('data'))->with('date', $date);
+        return view('test2.transaction.view', compact('data'))->with('date', $date)->with('perPage', $perPage);
     }
 
 
@@ -64,10 +64,13 @@ class TransactionController extends Controller
             $data= $data->where('transaction_detail.trans_name','LIKE', '%'.$request->search.'%');
         }
         
-        $data = $data->paginate(10);    
+        $perPage = $request->perPage ?? 10; 
+        
+        $data = $data->paginate($perPage); 
+
         $date = Carbon::now();
 
-        return view('test2.transaction.list', compact('data'))->with('date', $date);
+        return view('test2.transaction.list', compact('data'))->with('date', $date)->with('perPage', $perPage);
     }
 
     public function recap(Request $request)
@@ -89,11 +92,12 @@ class TransactionController extends Controller
         
         $data = $data->groupBy(['transaction.date_paid', 'transaction_detail.category_type']); 
 
-        $data = $data->paginate(10);   
-
+        $perPage = $request->perPage ?? 10; 
+        
+        $data = $data->paginate($perPage);  
 
         $date = Carbon::now();
-        return view('test2.transaction.recap', compact('data'))->with('date', $date);
+        return view('test2.transaction.recap', compact('data'))->with('date', $date)->with('perPage', $perPage);
     }
 
 

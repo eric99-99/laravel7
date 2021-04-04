@@ -78,28 +78,28 @@
                 @endphp
                 @endforeach
             </tbody>
-            {{-- {{ $data->links() }} --}}
         </table>
-
+        
         <div class="row">
             <div class="col-1">
-               <select class="form-control form-control-sm perPage" name="perPage">
-                    <option value="5">5</option>
-                    <option selected value="10">10</option>
-                    <option value="20">20</option>
-                </select>
+                <form action="">
+                    <select class="form-control form-control-sm perPage" name="perPage">
+                        <option value="5" @if($perPage == 5) selected @endif >5</option>
+                        <option value="10" @if($perPage == 10) selected @endif >10</option>
+                        <option value="20" @if($perPage == 20) selected @endif >20</option>
+                     </select>
+                </form>
+            </div>
+            <div class="col-3">
+                Menampilkan {{ $data->count()}} dari {{$data->total()}} data
             </div>
             <div class="col">
                 <span class="d-flex  justify-content-end">
-                    {{ $data->links() }}
+                    {{ $data->appends(compact('perPage'))->links() }}
                 </span>
             </div>
 
         </div>
-        {{-- <div class="d-flex justify-content-end">
-            {{ $data->links() }}
-        </div> --}}
-
     </div>
 
 </div>
@@ -110,9 +110,9 @@
 
 @push('custom-scripts')
     <script type="text/javascript">
-        // window.$('.perPage').on('change', function(e){
-        //     window.open('/trans/view', '_self')
-        // });
+        window.$('.perPage').on('change', function(e){
+            window.location = "{!! $data->url(1) !!}&perPage=" + this.value; 
+        });
 
         window.$('.card-body').on('click', '.btn-add-data',function(e){
             e.preventDefault();
