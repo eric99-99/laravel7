@@ -5,7 +5,7 @@
 
 <div class="card mt-1">
     <div  class="card-header">
-         <strong>Daftar Transaksi</strong> 
+         <strong>Laporan Transaksi Harian</strong> 
     </div>
     <div class="card-body">
         <form action="">
