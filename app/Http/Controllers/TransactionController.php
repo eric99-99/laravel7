@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models;
 use DB;
+use Carbon\Carbon;
 
 class TransactionController extends Controller
 {
@@ -15,11 +16,12 @@ class TransactionController extends Controller
      */
     public function index(Request $request)
     {
-        // dd($request);
+        dd($request);
 
         $data = Models\Transaction::join('transaction_detail', 'transaction.id', '=','transaction_detail.transaction_id')
                 ->select(['transaction.*','transaction_detail.trans_name', 
-                          'transaction_detail.total', 'transaction_detail.category_type', 'transaction_detail.id as detail_id' ]);
+                          'transaction_detail.total', 'transaction_detail.category_type', 
+                          'transaction_detail.id as detail_id' ]);
         
         if($request->date_paid1 && $request->date_paid2){
             $data=$data->whereBetween('date_paid', [$request->date_paid1, $request->date_paid2]);
@@ -32,20 +34,24 @@ class TransactionController extends Controller
         if($request->search){
             $data= $data->where('transaction_detail.trans_name','LIKE', '%'.$request->search.'%');
         }
+        $data = $data->orderBy('transaction.id', 'asc')
+                     ->orderBy('transaction_detail.trans_name', 'asc');
         
         $data = $data->paginate(10);    
+
+        $date = Carbon::now();
         
-        return view('test2.transaction.view', compact('data'));
+        return view('test2.transaction.view', compact('data'))->with('date', $date);
     }
 
 
     public function list(Request $request)
     {
-        
         $data = Models\Transaction::join('transaction_detail', 'transaction.id', '=','transaction_detail.transaction_id')
                 ->select(['transaction.*','transaction_detail.trans_name', 
                           'transaction_detail.total', 'transaction_detail.category_type' ]);
-        
+
+
         if($request->date_paid1 && $request->date_paid2){
             $data=$data->whereBetween('date_paid', [$request->date_paid1, $request->date_paid2]);
         }
@@ -59,14 +65,13 @@ class TransactionController extends Controller
         }
         
         $data = $data->paginate(10);    
-        
-        return view('test2.transaction.list', compact('data'));
+        $date = Carbon::now();
+
+        return view('test2.transaction.list', compact('data'))->with('date', $date);
     }
 
     public function recap(Request $request)
     {
-        // dd($request);
-
         $data = Models\Transaction::join('transaction_detail', 'transaction.id', '=','transaction_detail.transaction_id')
                 ->select(['transaction.date_paid','transaction_detail.category_type', \DB::RAW('Sum(total) as total') ]);
         
@@ -87,8 +92,8 @@ class TransactionController extends Controller
         $data = $data->paginate(10);   
 
 
-        
-        return view('test2.transaction.recap', compact('data'));
+        $date = Carbon::now();
+        return view('test2.transaction.recap', compact('data'))->with('date', $date);
     }
 
 
@@ -111,26 +116,37 @@ class TransactionController extends Controller
     public function store(Request $request)
     {
         try {
+            
+            $validatedData = $request->validate([
+                'description' => 'required',
+                'rate_euro' => 'required|numeric',
+                'code' => 'required',
+                'date_paid' => 'required',
+                ]);
+
             DB::beginTransaction();
+                
             $transaction = new Models\Transaction;
             $transaction->description = $request->description;
             $transaction->code = $request->code;
             $transaction->rate_euro = $request->rate_euro;
             $transaction->date_paid = $request->date_paid;
             $transaction->save();
-    
-    
+           
             if($request->data1){
                 foreach ($request->data1 as $item) {
                     $item = (object) $item;
                     if($item->name && $item->value){
-                        $detail = new Models\TransactionDetail;
-                        $detail->transaction_id =  $transaction->id;
-                        $detail->category_type = $request->category_type1;
-                        $detail->trans_name =  $item->name;
-                        $detail->total =  $item->value;
+                        $trans = Models\Transaction::find($transaction->id);
+                        $data = array(
+                            "transaction_id" => $trans->id,
+                            "category_type" => $request->category_type1,
+                            "trans_name" => $item->name,
+                            "total" => $item->value
+                        );
+
+                        $trans->detail()->create($data);
                         
-                        $detail->save();
                     }
                 }
             }
@@ -139,13 +155,15 @@ class TransactionController extends Controller
                 foreach ($request->data2 as $item) {
                     $item = (object) $item;
                     if($item->name && $item->value){
-                        $detail = new Models\TransactionDetail;
-                        $detail->transaction_id =  $transaction->id;
-                        $detail->category_type = $request->category_type2;
-                        $detail->trans_name =  $item->name;
-                        $detail->total =  $item->value;
-                        
-                        $detail->save();
+                        $trans = Models\Transaction::find($transaction->id);
+                        $data = array(
+                            "transaction_id" => $trans->id,
+                            "category_type" => $request->category_type2,
+                            "trans_name" => $item->name,
+                            "total" => $item->value
+                        );
+
+                        $trans->detail()->create($data);
                     }
                 }            
             }  
@@ -154,6 +172,8 @@ class TransactionController extends Controller
            
         } catch (\Exception $e) {
              DB::rollback();
+             \Log::info($e->getMessage());
+             dd($e);
              return redirect()->back()->withErrors($e->getMessage())->withInput();
         }
 
@@ -195,6 +215,13 @@ class TransactionController extends Controller
     {
         try {
             // dd($request);
+            $validatedData = $request->validate([
+                'description' => 'required',
+                'rate_euro' => 'required|numeric',
+                'code' => 'required',
+                'date_paid' => 'required',
+            ]);
+
             DB::beginTransaction();
 
             $transaction = Models\Transaction::find($id);
@@ -204,22 +231,25 @@ class TransactionController extends Controller
             $transaction->date_paid = $request->date_paid;
             $transaction->save();
     
-            // delete detail
-            $id_delete = Models\TransactionDetail::where('transaction_id', $id)->pluck('id');
-            Models\TransactionDetail::whereIn('id', $id_delete)->delete();
-    
-    
+            
             if($request->data1){
                 foreach ($request->data1 as $item) {
                     $item = (object) $item;
                     if($item->name && $item->value){
-                        $detail = new Models\TransactionDetail;
-                        $detail->transaction_id =  $transaction->id;
-                        $detail->category_type = $request->category_type1;
-                        $detail->trans_name =  $item->name;
-                        $detail->total =  $item->value;
+                        $trans = Models\Transaction::find($transaction->id);
                         
-                        $detail->save();
+                        $detail_id = array(
+                            "id" => ($item->id) ? $item->id : null,
+                        );
+
+                        $data = array(
+                            "transaction_id" => $trans->id,
+                            "category_type" => $request->category_type1,
+                            "trans_name" => $item->name,
+                            "total" => $item->value
+                        );
+
+                        $trans->detail()->updateOrCreate($detail_id, $data);
                     }
                 }
             }
@@ -228,13 +258,20 @@ class TransactionController extends Controller
                 foreach ($request->data2 as $item) {
                     $item = (object) $item;
                     if($item->name && $item->value){
-                        $detail = new Models\TransactionDetail;
-                        $detail->transaction_id =  $transaction->id;
-                        $detail->category_type = $request->category_type2;
-                        $detail->trans_name =  $item->name;
-                        $detail->total =  $item->value;
+                        $trans = Models\Transaction::find($transaction->id);
                         
-                        $detail->save();
+                        $detail_id = array(
+                            "id" => ($item->id) ? $item->id : null,
+                        );
+
+                        $data = array(
+                            "transaction_id" => $trans->id,
+                            "category_type" => $request->category_type2,
+                            "trans_name" => $item->name,
+                            "total" => $item->value
+                        );
+
+                        $trans->detail()->updateOrCreate($detail_id, $data);
                     }
                 }
             }

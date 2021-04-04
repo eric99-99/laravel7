@@ -17,6 +17,7 @@
                 </ul>
             </div><br />
         @endif
+        
         <form method="post" action="{{ route('trans-update', $data->id )}}">
             @csrf
             @method('PATCH')
@@ -83,6 +84,7 @@
                                     $is_item = true;
                                 @endphp
                                 <tr>
+                                    <input type="hidden" class="form-control form-control-sm" name="data1[{{$i}}][id]" id="id1_1" value="{{$item->id ? $item->id : null }}">
                                     <td><input type="text" class="form-control form-control-sm" name="data1[{{$i}}][name]" id="name1_1" value="{{$item->trans_name}}"></td>
                                     <td><input type="number" class="form-control form-control-sm text-right" name="data1[{{$i}}][value]" id="value1_1"value="{{$item->total}}"></td>
                                     <td class="text-center"><button class="btn btn-primary btn-add-item" id="btn-add-item1_1">+</button></td>
@@ -94,6 +96,7 @@
                           @endforeach
                           @if ($is_item === false)
                             <tr>
+                                <input type="hidden" class="form-control form-control-sm" name="data1[1][id]" id="id1_1">
                                 <td><input type="text" class="form-control form-control-sm" name="data1[1][name]" id="name1_1"></td>
                                 <td><input type="number" class="form-control form-control-sm text-right" name="data1[1][value]" id="value1_1"></td>
                                 <td class="text-center"><button class="btn btn-primary btn-add-item" id="btn-add-item1_1">+</button></td>
@@ -146,8 +149,8 @@
                                    @php
                                         $is_item = true; 
                                    @endphp 
-                                       
                                   <tr>
+                                      <input type="hidden" class="form-control form-control-sm" name="data2[{{$j}}][id]" id="id2_1" value="{{$item->id}}">
                                       <td><input type="text" class="form-control form-control-sm" name="data2[{{$j}}][name]" id="name2_1" value="{{$item->trans_name}}"></td>
                                       <td><input type="number" class="form-control form-control-sm text-right" name="data2[{{$j}}][value]" id="value2_1"value="{{$item->total}}"></td>
                                       <td class="text-center"><button class="btn btn-primary btn-add-item" id="btn-add-item2_1">+</button></td>
@@ -160,6 +163,7 @@
 
                             @if ($is_item === false)
                                 <tr>
+                                    <input type="hidden" class="form-control form-control-sm" name="data2[1][id]" id="id2_1">
                                     <td><input type="text" class="form-control form-control-sm" name="data2[1][name]" id="name2_1"></td>
                                     <td><input type="number" class="form-control form-control-sm text-right" name="data2[1][value]" id="value2_1"></td>
                                     <td class="text-center"><button class="btn btn-primary btn-add-item" id="btn-add-item2_1">+</button></td>
@@ -220,8 +224,9 @@
             // window.$('#name1_' + i).prop('disabled', true);
             // window.$('#value1_' + i).prop('disabled', true);
             i++;
-            
-            let sHtml ='<tr>' ;
+            let sHidden ='<input type="hidden" class="form-control form-control-sm" name="data1['+i+'][id]" id="id1_' +i+ '" >';
+            let sHtml = '<tr>' ;
+            sHtml = sHtml + sHidden ;
             sHtml = sHtml +  '<td><input type="text" class="form-control form-control-sm" name="data1['+i+'][name]" id="name1_' +i+ '" ></td>';
             sHtml = sHtml +  '<td><input type="number" class="form-control form-control-sm text-right" name="data1['+i+'][value]" id="value1_'+ i+ '"></td>';
             sHtml = sHtml +  '<td class="text-center"><button class="btn btn-primary btn-add-item" id="btn-add-item1_' + i + '" >+</button></td>';
@@ -239,8 +244,9 @@
             // window.$('#name2_' + i).prop('disabled', true);
             // window.$('#value2_' + i).prop('disabled', true);
             // j++;
-            
-            let sHtml ='<tr>' ;
+            let sHidden ='<input type="hidden" class="form-control form-control-sm" name="data2['+j+'][id]" id="id2_' +j+ '" >';
+            let sHtml = '<tr>' ;
+            sHtml = sHtml + sHidden ;
             sHtml = sHtml +  '<td><input type="text" class="form-control form-control-sm" name="data2['+j+'][name]" id="name2_' +j+ '" ></td>';
             sHtml = sHtml +  '<td><input type="number" class="form-control form-control-sm text-right" name="data2['+j+'][value]" id="value2_'+ j+ '"></td>';
             sHtml = sHtml +  '<td class="text-center"><button class="btn btn-primary btn-add-item" id="btn-add-item2_' + j + '" >+</button></td>';

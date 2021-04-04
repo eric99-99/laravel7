@@ -7,10 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 class Transaction extends Model
 {
     protected $table = 'transaction';
-    protected $fillable = ['description', 'code','rate_euro', 'date_paid', 'grand_total' ];
+    protected $fillable = ['description', 'code','rate_euro', 'date_paid'];
 
     public function detail()
     {
-        return $this->HasMany(TransactionDetail::class, 'transaction_id', 'id');
+        return $this->HasMany(TransactionDetail::class, 'transaction_id');
     }
 }
