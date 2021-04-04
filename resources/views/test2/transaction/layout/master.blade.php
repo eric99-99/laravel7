@@ -29,6 +29,9 @@
             <div class="navbar-collapse collapse w-100 order-3 dual-collapse2">
                 <ul class="navbar-nav ml-auto">
                     <li class="nav-item active">
+                        <a class="btn btn-warning ml-1" href={{ route('trans-view') }}>Daftar Transaksi</a>
+                    </li>
+                    <li class="nav-item active">
                         <a class="btn btn-primary ml-1" href={{ route('trans-list') }}>Laporan Transaksi Harian</a>
                     </li>
                     <li class="nav-item active">
